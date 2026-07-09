@@ -1,0 +1,270 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -608,
+        -144
+      ],
+      "id": "a5d1e4da-a1b4-4d13-908b-1176e615528c",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HDTpA8aGUH3wCY9V",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Classify the following email into one category.\n\nSubject: {{ $json.subject }}\nBody: {{ $json.snippet }}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -352,
+        -144
+      ],
+      "id": "4f14a76c-a775-488a-84db-e808fe52c6a1",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -352,
+        32
+      ],
+      "id": "9b559dd5-1e8e-402e-987a-234065a0d93b",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "ylfKqAzQx7S72KhC",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "02ca81c2-8a6b-42b2-a282-2ec35281b0f7",
+              "leftValue": "={{$json.category}}",
+              "rightValue": "spam",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        288,
+        -144
+      ],
+      "id": "82472a1f-563c-42c4-808f-bf550ce68e81",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{$json.id}}",
+        "labelIds": [
+          "SPAM"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        544,
+        -160
+      ],
+      "id": "45952b4d-6438-411c-81c1-6ebc29fea0a4",
+      "name": "Add label to message",
+      "webhookId": "4b7dde8d-5516-498c-a084-825db30f243a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HDTpA8aGUH3wCY9V",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const id = $('Gmail Trigger').item.json.id;\nconst category = $input.item.json.output.category;\nconst confidence = $input.item.json.output.confidence;\nreturn { id, category, confidence };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -16,
+        -144
+      ],
+      "id": "10e77705-517b-4320-a219-db7228778c4e",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"category\": {\n      \"type\": \"string\",\n      \"enum\": [\"important\", \"newsletter\", \"spam\", \"personal\", \"other\"],\n      \"description\": \"The single best-fit category for the email\"\n    },\n    \"confidence\": {\n      \"type\": \"number\",\n      \"description\": \"Confidence score from 0 to 1\"\n    }\n  },\n  \"required\": [\"category\"],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -208,
+        32
+      ],
+      "id": "0f4e181a-b262-4f90-a907-fd62210af24d",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_3755655386851092556"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        0
+      ],
+      "id": "6ab39ba8-f008-4fb7-b6e6-d899771f931d",
+      "name": "Add label to message1",
+      "webhookId": "9840e1e9-a389-44e4-a6eb-d514490cf799",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HDTpA8aGUH3wCY9V",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Add label to message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add label to message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "2dc8bf02-8c35-4f90-9c79-03730f3c07be",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e2d48148170c1cce57085744bc18ecef8b9662361571ebf603e981c9e4126259"
+  },
+  "nodeGroups": [],
+  "id": "D6FYKwp7a1dJFpDe",
+  "tags": []
+}
